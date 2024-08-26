@@ -7,52 +7,39 @@ public class Produto {
     private float valorEntrada;
     private float valorSaida;
     private int quantidadeAtual;
+    private float descontoTotal = 0;
 
-    public void setCodigo(String codigo){
+    //construtor
+    public Produto(String codigo, String descricao, String marca, float valorEntrada, float valorSaida, int quantidadeAtual) {
         this.codigo = codigo;
-    }
-
-    public String getCodigo(){
-        return codigo;
-    }
-
-    public void setDescricao(String descricao){
         this.descricao = descricao;
-    }
-
-    public String getDescricao(){
-        return descricao;
-    }
-
-    public void setMarca(String marca){
         this.marca = marca;
-    }
-
-    public String getMarca(){
-        return marca;
-    }
-
-    public void setValorEntrada(float valorEntrada){
         this.valorEntrada = valorEntrada;
-    }
-
-    public float getValorEntrada(){
-        return valorEntrada;
-    }
-
-    public void setValorSaida(float valorSaida){
-        this.valorSaida = valorSaida;
-    }
-
-    public float getValorSaida(){
-        return valorSaida;
-    }
-
-    public void setQuantidadeAtual(int quantidadeAtual){
+        this.valorSaida = valorSaida * (1 - descontoTotal);
         this.quantidadeAtual = quantidadeAtual;
     }
 
-    public int getQuantidadeAtual(){
-        return quantidadeAtual;
+    //getters
+    public String getCodigo() { return codigo; }
+    public String getDescricao() { return descricao; }
+    public String getMarca() { return marca; }
+    public float getValorEntrada() { return valorEntrada; }
+    public float getValorSaida() { return valorSaida; }
+    public int getQuantidadeAtual() { return quantidadeAtual; }
+
+    //setters
+    public void setValorEntrada(float valorEntrada) {
+        this.valorEntrada = valorEntrada;
+    }
+    public void setValorSaida(float valorSaida) {
+        this.valorSaida = valorSaida;
+    }
+    public void setQuantidadeAtual(int quantidadeAtual) {
+        this.quantidadeAtual = quantidadeAtual;
+    }
+
+    //metodo pra aplicar desconto, na real é so um set do descontoTotal
+    public void aplicarDesconto(float percentual) {
+        this.descontoTotal = percentual/100;
     }
 }
