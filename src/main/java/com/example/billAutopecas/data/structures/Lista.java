@@ -1,37 +1,29 @@
 package com.example.billAutopecas.data.structures;
 
 import com.example.billAutopecas.data.models.Produto;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.example.billAutopecas.data.models.Venda;
 
 public class Lista {
     private No inicio;
+    private NoVenda inicioVendas;
 
-    //construtor iniciando lista vazia
+    // Construtor iniciando lista vazia
     public Lista() {
         this.inicio = null;
+        this.inicioVendas = null;
     }
 
-    //to usando esse metodo aqui pra retornar
-    //pra minha camada que vai encapsular a lista e mandar pro front, APENAS
     public No getInicio() {
         return inicio;
     }
 
-    //TODO:DECIDIR SE REALMENTE VOU CONTINUAR JUNTANDO O METODO DE REPOR NESSE
-    //TODO:TALVEZ NOTIFICAR QUE JA EXISTE, DAR A OPCAO E AI ROTEAR PRO ENDPOINT DE REPOR, PENSAREI
-    //inserindo ordenado pelo nome ja receba
-    public void adicionarProduto(Produto produto) {
-        //usando o metodo q criei pra ver se tem repetido pq tinha esquecido xiii
+    // Adiciona um produto na lista
+    public boolean adicionarProduto(Produto produto) {
         Produto produtoExistente = buscarProdutoPorCodigo(produto.getCodigo());
 
         if (produtoExistente != null) {
-            //Se o produto já existir, aumenta SO a quantidade
-            produtoExistente.setQuantidadeAtual(
-                    produtoExistente.getQuantidadeAtual() + produto.getQuantidadeAtual());
+            return false; // Produto já existe
         } else {
-            //se n existir, cria
             No novoNo = new No(produto);
 
             if (inicio == null || inicio.getProduto().getDescricao().compareTo(produto.getDescricao()) > 0) {
@@ -45,13 +37,15 @@ public class Lista {
                     temp = temp.getProximo();
                 }
 
-                //inserindo o produto de fato na lista
                 novoNo.setProximo(temp.getProximo());
                 temp.setProximo(novoNo);
             }
+
+            return true; // Produto adicionado com sucesso
         }
     }
 
+    // Busca um produto por código
     public Produto buscarProdutoPorCodigo(String codigo) {
         No temp = inicio;
         while (temp != null) {
@@ -60,127 +54,225 @@ public class Lista {
             }
             temp = temp.getProximo();
         }
-        return null; //produto não encontrado
+        return null; // Produto não encontrado
     }
 
-    public List<Produto> listarTodosProdutos() {
-        List<Produto> produtos = new ArrayList<>();
+    // Lista todos os produtos
+    public Lista listarTodosProdutos() {
+        Lista listaProdutos = new Lista();
         No temp = inicio;
         while (temp != null) {
-            produtos.add(temp.getProduto());
+            listaProdutos.adicionarProduto(temp.getProduto());
             temp = temp.getProximo();
         }
-        return produtos;
+        return listaProdutos;
     }
-    public void mostrarProdutos() {
-        if (inicio == null) {
-            System.out.println("Nenhum produto cadastrado.");
-            return;
-        }
+
+    // Formata a lista de produtos para o frontend
+    public String listarTodosProdutosFront() {
+        StringBuilder response = new StringBuilder();
         No temp = inicio;
+
+        if (temp == null) {
+            return "Nenhum produto encontrado";
+        }
+
         while (temp != null) {
             Produto produto = temp.getProduto();
-            System.out.println("Código: " + produto.getCodigo() + ", Descrição: " + produto.getDescricao() +
-                    ", Marca: " + produto.getMarca() + ", Valor Entrada: " + produto.getValorEntrada() +
-                    ", Valor Saída: " + produto.getValorSaida() + ", Estoque: " + produto.getQuantidadeAtual());
+            response.append("Código: ").append(produto.getCodigo())
+                    .append(", Descrição: ").append(produto.getDescricao())
+                    .append(", Marca: ").append(produto.getMarca())
+                    .append(", Valor Entrada: ").append(produto.getValorEntrada())
+                    .append(", Valor Saída: ").append(produto.getValorSaida())
+                    .append(", Estoque: ").append(produto.getQuantidadeAtual())
+                    .append("\n");
             temp = temp.getProximo();
         }
+
+        return response.toString();
     }
 
-    public void mostrarProdutoIndividual(String codigo) {
-        Produto produto = buscarProdutoPorCodigo(codigo);
-        if (produto != null) {
-            System.out.println("Código: " + produto.getCodigo() + ", Descrição: " + produto.getDescricao() +
-                    ", Marca: " + produto.getMarca() + ", Valor Entrada: " + produto.getValorEntrada() +
-                    ", Valor Saída: " + produto.getValorSaida() + ", Estoque: " + produto.getQuantidadeAtual());
-        } else {
-            System.out.println("Produto não encontrado.");
-        }
-    }
-
-    //vulgo somando no qtdEstoque atual
+    // Repor estoque de um produto
     public void reporEstoque(String codigo, int quantidade) {
         Produto produto = buscarProdutoPorCodigo(codigo);
         if (produto != null) {
             produto.setQuantidadeAtual(produto.getQuantidadeAtual() + quantidade);
-            System.out.println("Estoque do produto " + produto.getDescricao() + " atualizado.");
         } else {
             System.out.println("Produto não encontrado.");
         }
     }
 
-    //quase a mesma coisa so q diminuindo do estoque se tiver
-    public void venderProduto(String codigo, int quantidade) {
+    // Vender um produto
+    public boolean venderProduto(String codigo, int quantidade) {
+        if (quantidade <= 0) {
+            System.out.println("Quantidade de venda deve ser maior que 0.");
+            return false;
+        }
+
         Produto produto = buscarProdutoPorCodigo(codigo);
         if (produto != null) {
             if (produto.getQuantidadeAtual() >= quantidade) {
                 produto.setQuantidadeAtual(produto.getQuantidadeAtual() - quantidade);
-                System.out.println("Venda realizada. Estoque atualizado.");
+                produto.setQuantidadeVendida(produto.getQuantidadeVendida() + quantidade);
+
+                // Registra a venda com o preço atual do produto
+                float precoVenda = produto.getValorSaida();
+                Venda novaVenda = new Venda(codigo, quantidade, precoVenda);
+                NoVenda novoNoVenda = new NoVenda(novaVenda);
+
+                if (inicioVendas == null) {
+                    inicioVendas = novoNoVenda;
+                } else {
+                    NoVenda temp = inicioVendas;
+                    while (temp.getProximo() != null) {
+                        temp = temp.getProximo();
+                    }
+                    temp.setProximo(novoNoVenda);
+                }
+
+                // Retorna true se a venda foi realizada com sucesso
+                return true;
             } else {
                 System.out.println("Estoque insuficiente.");
+                return false;
             }
         } else {
             System.out.println("Produto não encontrado.");
+            return false;
         }
     }
 
-    //ALTERADOR INDIVIDUAL DE PRECO
-    public void alterarPrecoIndividual(String codigo, float novoPreco) {
+    public boolean alterarPrecoSaidaTodos(float percentualAlteracao) {
+        if (percentualAlteracao == 0) {
+            return false; // Nenhuma alteração se o percentual for zero
+        }
+
+        // Verifica se há produtos na lista
+        if (inicio == null) {
+            return false; // Nenhum produto em estoque
+        }
+
+        No atual = inicio;
+
+        while (atual != null) {
+            Produto produto = atual.getProduto();
+            float precoAtual = produto.getValorSaida();
+            float fatorAlteracao = percentualAlteracao / 100;
+
+            // Calcula o novo preço com base no percentual fornecido
+            float novoPreco = precoAtual * (1 + fatorAlteracao);
+
+            // Garante que o preço não fique negativo
+            if (novoPreco < 0) {
+                novoPreco = 0;
+            }
+
+            produto.setValorSaida(novoPreco);
+
+            atual = atual.getProximo(); // Passa para o próximo nó
+        }
+
+        return true; // Retorna true se a operação for realizada com sucesso
+    }
+
+    // Alterar preço individual de um produto
+    public boolean alterarPrecoSaidaIndividual(String codigo, float novoPreco) {
+        if (novoPreco < 0) {
+            return false; // Preço inválido
+        }
+
         Produto produto = buscarProdutoPorCodigo(codigo);
         if (produto != null) {
             produto.setValorSaida(novoPreco);
-            System.out.println("Valor de saída atualizado.");
+            return true; // Alteração bem-sucedida
+        } else {
+            return false; // Produto não encontrado
+        }
+    }
+
+    public boolean alterarPrecoEntradaIndividual(String codigo, float novoPreco) {
+        if (novoPreco < 0) {
+            return false; // Preço inválido
+        }
+
+        Produto produto = buscarProdutoPorCodigo(codigo);
+        if (produto != null) {
+            produto.setValorEntrada(novoPreco);
+            return true; // Alteração bem-sucedida
+        } else {
+            return false; // Produto não encontrado
+        }
+    }
+
+
+    // Gerar relatório de vendas
+    public String gerarRelatorioVendas() {
+        StringBuilder relatorioVendas = new StringBuilder();
+        double valorTotalGeral = 0.0;
+
+        NoVenda tempVenda = inicioVendas;
+        while (tempVenda != null) {
+            Venda venda = tempVenda.getVenda();
+            String codigo = venda.getCodigoProduto();
+            double valorVenda = venda.getPrecoVenda();
+            int quantidadeVendida = venda.getQuantidade();
+            double valorTotal = valorVenda * quantidadeVendida;
+
+            // Adicionar informações da venda ao relatório
+            relatorioVendas.append("Produto: ").append(codigo)
+                    .append(", Quantidade Vendida: ").append(quantidadeVendida)
+                    .append(", Preço de Venda: ").append(valorVenda)
+                    .append(", Valor Total: ").append(valorTotal)
+                    .append("\n");
+
+            // Atualizar o valor total geral
+            valorTotalGeral += valorTotal;
+
+            tempVenda = tempVenda.getProximo();
+        }
+
+        // Adicionar o total geral das vendas
+        relatorioVendas.append("Valor Total Geral das Vendas: ").append(valorTotalGeral);
+
+        return relatorioVendas.toString();
+    }
+
+    //Relatório de estoque
+    public String gerarRelatorioEstoque() {
+        StringBuilder relatorioEstoque = new StringBuilder();
+
+        No temp = inicio;
+        while (temp != null) {
+            Produto produto = temp.getProduto();
+            relatorioEstoque.append("Produto: ").append(produto.getDescricao())
+                    .append(", Quantidade em Estoque: ").append(produto.getQuantidadeAtual())
+                    .append("\n");
+            temp = temp.getProximo();
+        }
+
+        return relatorioEstoque.toString();
+    }
+
+    /* APOSENTADOS Q TALVEZ PRECISE DEPOIS DEIXE AI
+
+    // Aplicar desconto a um produto específico
+    public void aplicarDesconto(String codigo, double percentualDesconto) {
+        Produto produto = buscarProdutoPorCodigo(codigo);
+        if (produto != null) {
+            produto.aplicarDesconto(percentualDesconto);
         } else {
             System.out.println("Produto não encontrado.");
         }
     }
 
-    //mudanco preco DENTRO DA LISTA em todos os produtos
-    public void aplicarAlteracaoDePrecos(float percentual) {
-        No temp = inicio;
-        while (temp != null) {
-            Produto produto = temp.getProduto();
-            produto.aplicarDesconto(percentual);  // Aplica o desconto individualmente
-            temp = temp.getProximo();
-        }
-        System.out.println("Desconto aplicado a todos os produtos.");
-    }
-
-    //esse metodo aqui eu to so MOSTRANDO com um desconto temporario, so pa ser massa
-    public void mostrarProdutosComDesconto(float percentual) {
-        No temp = inicio;
-        while (temp != null) {
-            Produto produto = temp.getProduto();
-            float valorComDesconto = produto.getValorSaida() * (1 - percentual / 100);
-            System.out.println("Produto: " + produto.getDescricao() + " - Valor com desconto: " + valorComDesconto);
-            temp = temp.getProximo();
+    // Aplicar aumento a um produto específico
+    public void aplicarAumento(String codigo, double percentualAumento) {
+        Produto produto = buscarProdutoPorCodigo(codigo);
+        if (produto != null) {
+            produto.aplicarAumento(percentualAumento);
+        } else {
+            System.out.println("Produto não encontrado.");
         }
     }
-    public void mostrarRelatorioDeVendas() {
-        if (inicio == null) {
-            System.out.println("Nenhuma venda registrada.");
-            return;
-        }
-        No temp = inicio;
-        while (temp != null) {
-            Produto produto = temp.getProduto();
-            System.out.println("Produto: " + produto.getDescricao() + ", Quantidade em Estoque: " +
-                    produto.getQuantidadeAtual() + ", Valor de Saída: " + produto.getValorSaida());
-            temp = temp.getProximo();
-        }
-    }
-
-    public void mostrarRelatorioDeEstoque() {
-        if (inicio == null) {
-            System.out.println("Nenhum produto em estoque.");
-            return;
-        }
-        No temp = inicio;
-        while (temp != null) {
-            Produto produto = temp.getProduto();
-            System.out.println("Produto: " + produto.getDescricao() + ", Quantidade em Estoque: " +
-                    produto.getQuantidadeAtual());
-            temp = temp.getProximo();
-        }
-    }
+     */
 }
