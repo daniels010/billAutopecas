@@ -183,7 +183,7 @@ public class Lista {
 
     // Alterar preço individual de um produto
     public boolean alterarPrecoSaidaIndividual(String codigo, float novoPreco) {
-        if (novoPreco < 0) {
+        if (novoPreco <= 0) {
             return false; // Preço inválido
         }
 
@@ -197,7 +197,7 @@ public class Lista {
     }
 
     public boolean alterarPrecoEntradaIndividual(String codigo, float novoPreco) {
-        if (novoPreco < 0) {
+        if (novoPreco <= 0) {
             return false; // Preço inválido
         }
 
