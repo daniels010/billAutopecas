@@ -22,8 +22,8 @@ public class ListaService {
         return lista.buscarProdutoPorCodigo(codigo);
     }
 
-    public void reporEstoque(String codigo, int quantidade) {
-        lista.reporEstoque(codigo, quantidade);
+    public boolean reporEstoque(String codigo, int quantidade) {
+        return lista.reporEstoque(codigo, quantidade);
     }
 
     public boolean venderProduto(String codigo, int quantidade) {

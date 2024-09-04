@@ -74,7 +74,7 @@ public class Lista {
         No temp = inicio;
 
         if (temp == null) {
-            return "Nenhum produto encontrado";
+            return ""; // Retorna uma string vazia se não houver produtos
         }
 
         while (temp != null) {
@@ -89,16 +89,22 @@ public class Lista {
             temp = temp.getProximo();
         }
 
-        return response.toString();
+        return response.toString().trim(); // Remove qualquer espaço em branco extra no final
     }
 
+
     // Repor estoque de um produto
-    public void reporEstoque(String codigo, int quantidade) {
+    public boolean reporEstoque(String codigo, int quantidade) {
+        if (quantidade <= 0) {
+            return false; // Quantidade inválida
+        }
+
         Produto produto = buscarProdutoPorCodigo(codigo);
         if (produto != null) {
             produto.setQuantidadeAtual(produto.getQuantidadeAtual() + quantidade);
+            return true; // Reposição de estoque bem-sucedida
         } else {
-            System.out.println("Produto não encontrado.");
+            return false; // Produto não encontrado
         }
     }
 

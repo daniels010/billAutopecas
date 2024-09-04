@@ -31,8 +31,8 @@ public class EstoqueController {
         if (produto.getValorSaida() <= 0) {
             return new ResponseEntity<>("Valor de saída deve ser maior que zero", HttpStatus.BAD_REQUEST);
         }
-        if (produto.getQuantidadeAtual() < 0) {
-            return new ResponseEntity<>("Quantidade atual não pode ser negativa", HttpStatus.BAD_REQUEST);
+        if (produto.getQuantidadeAtual() <= 0) {
+            return new ResponseEntity<>("Quantidade atual deve ser maior que 0", HttpStatus.BAD_REQUEST);
         }
 
         boolean adicionado = listaService.adicionarProduto(produto);
@@ -56,8 +56,10 @@ public class EstoqueController {
     @GetMapping("/todos")
     public ResponseEntity<String> listarProdutos() {
         String produtos = listaService.listarTodosProdutos();
-        if (produtos.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        if (produtos.trim().isEmpty()) {
+            // Retorna a mensagem e o status 404 quando não há produtos
+            return new ResponseEntity<>("Nenhum produto encontrado", HttpStatus.NOT_FOUND);
         } else {
             return new ResponseEntity<>(produtos, HttpStatus.OK);
         }
@@ -65,13 +67,15 @@ public class EstoqueController {
 
     @PostMapping("/repor-estoque")
     public ResponseEntity<String> reporEstoque(@RequestParam String codigo, @RequestParam int quantidade) {
-        try {
-            listaService.reporEstoque(codigo, quantidade);
+        boolean sucesso = listaService.reporEstoque(codigo, quantidade);
+
+        if (sucesso) {
             return new ResponseEntity<>("Estoque atualizado com sucesso", HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Erro ao repor estoque", HttpStatus.INTERNAL_SERVER_ERROR);
+        } else {
+            return new ResponseEntity<>("Falha ao repor o estoque. Verifique o código e a quantidade.", HttpStatus.BAD_REQUEST);
         }
     }
+
 
     @PostMapping("/vender-produto")
     public ResponseEntity<String> venderProduto(@RequestParam String codigo, @RequestParam int quantidade) {
@@ -127,8 +131,6 @@ public class EstoqueController {
             return new ResponseEntity<>("Erro ao gerar relatório de vendas", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
     @GetMapping("/estoque")
     public ResponseEntity<String> relatorioEstoque() {
